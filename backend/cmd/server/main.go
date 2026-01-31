@@ -5,6 +5,7 @@ import (
 	"lapangan/internal/routes"
 	"lapangan/internal/utils"
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -22,5 +23,9 @@ func main() {
 
 	r := routes.SetupRouter()
 
-	r.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run(":" + port)
 }

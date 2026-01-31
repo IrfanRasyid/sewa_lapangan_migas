@@ -19,8 +19,15 @@ COPY . .
 # Build the application
 RUN go build -o main ./cmd/server/main.go
 
-# Expose port 8080
-EXPOSE 8080
+# Create a non-root user (Required for Hugging Face Spaces)
+RUN adduser -D -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Expose port 7860 (Hugging Face Default)
+EXPOSE 7860
+ENV PORT=7860
 
 # Command to run the executable
 CMD ["./main"]
