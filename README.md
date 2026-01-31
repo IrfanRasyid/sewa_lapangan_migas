@@ -1,4 +1,4 @@
-# Lapangan Sports Booking System
+# LAPANGAN MIGAS 61 BOOKING SYSTEM
 
 A full-stack sports field rental website with User and Admin roles.
 
