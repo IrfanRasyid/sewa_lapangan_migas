@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: lapangan-backend
+    env: docker
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DB_TYPE
+        value: postgres
+      - key: DB_HOST
+        fromDatabase:
+          name: lapangan-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: lapangan-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: lapangan-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: lapangan-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: lapangan-db
+          property: database
+
+databases:
+  - name: lapangan-db
+    plan: free
+    databaseName: lapangan
+    user: lapangan_user
