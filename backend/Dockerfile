@@ -21,6 +21,10 @@ RUN go build -o main ./cmd/server/main.go
 
 # Create a non-root user (Required for Hugging Face Spaces)
 RUN adduser -D -u 1000 user
+
+# Fix permissions for /app (so user can write logs/db if needed)
+RUN chown -R user:user /app
+
 USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
