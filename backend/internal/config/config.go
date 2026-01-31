@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/glebarez/sqlite"
@@ -16,11 +17,7 @@ import (
 var DB *gorm.DB
 
 // resolveToIP resolves a hostname to an IPv4 address.
-// This is used to force IPv4 connection because Hugging Face Spaces / Docker
-// often fail to route IPv6 traffic to external services (like Supabase),
-// resulting in "network is unreachable" errors.
 func resolveToIP(host string) string {
-	// If it's already an IP, return as is
 	if net.ParseIP(host) != nil {
 		return host
 	}
@@ -31,15 +28,60 @@ func resolveToIP(host string) string {
 		return host
 	}
 
-	// Prioritize IPv4
 	for _, ip := range ips {
 		if ip.To4() != nil {
 			fmt.Printf("Resolved %s to IPv4: %s\n", host, ip.String())
 			return ip.String()
 		}
 	}
-
 	return host
+}
+
+// forceIPv4InDSN attempts to replace hostname with IPv4 in the connection string.
+// It handles both DSN format (host=...) and URI format (postgres://...)
+func forceIPv4InDSN(dsn string) string {
+	// Strategy 1: Look for standard Supabase hostname pattern
+	// This is the most reliable way for Supabase specifically
+	reSupabase := regexp.MustCompile(`([a-z0-9-]+\.supabase\.co)`)
+	matches := reSupabase.FindStringSubmatch(dsn)
+	if len(matches) > 1 {
+		host := matches[1]
+		ipv4 := resolveToIP(host)
+		if ipv4 != host {
+			fmt.Println("Replacing Supabase hostname with IP...")
+			return strings.Replace(dsn, host, ipv4, 1)
+		}
+	}
+
+	// Strategy 2: Look for host= parameter (DSN format)
+	if strings.Contains(dsn, "host=") {
+		reHost := regexp.MustCompile(`host=([^ ]+)`)
+		matches := reHost.FindStringSubmatch(dsn)
+		if len(matches) > 1 {
+			host := matches[1]
+			ipv4 := resolveToIP(host)
+			if ipv4 != host {
+				fmt.Println("Replacing DSN host= value with IP...")
+				return strings.Replace(dsn, "host="+host, "host="+ipv4, 1)
+			}
+		}
+	}
+
+	// Strategy 3: Try URL parsing (URI format)
+	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
+		u, err := url.Parse(dsn)
+		if err == nil {
+			host := u.Hostname()
+			ipv4 := resolveToIP(host)
+			if ipv4 != host {
+				fmt.Println("Replacing URI hostname with IP...")
+				// We replace directly in string to avoid encoding issues with password
+				return strings.Replace(dsn, host, ipv4, 1)
+			}
+		}
+	}
+
+	return dsn
 }
 
 func ConnectDB() {
@@ -48,73 +90,49 @@ func ConnectDB() {
 
 	if dbType == "postgres" {
 		var dsn string
-		if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
-			// Parse the URL to replace hostname with IPv4
-			// This handles both postgres://... URIs and key=value DSNs (partially)
-			// But for simplicity, we assume standard Supabase connection string format or DSN
-
-			// Try to parse as URL first
-			u, err := url.Parse(dbUrl)
-			if err == nil && u.Host != "" {
-				host, port, _ := net.SplitHostPort(u.Host)
-				if host == "" {
-					host = u.Host
-				}
-				ipv4 := resolveToIP(host)
-				if port != "" {
-					u.Host = ipv4 + ":" + port
-				} else {
-					u.Host = ipv4
-				}
-				dsn = u.String()
-			} else {
-				// Fallback for key=value string (simple replace)
-				// Note: This is a bit brittle but works for standard cases
-				dsn = dbUrl
-				// If DSN contains host=...
-				if strings.Contains(dsn, "host=") {
-					parts := strings.Split(dsn, " ")
-					for i, part := range parts {
-						if strings.HasPrefix(part, "host=") {
-							host := strings.TrimPrefix(part, "host=")
-							ipv4 := resolveToIP(host)
-							parts[i] = "host=" + ipv4
-						}
-					}
-					dsn = strings.Join(parts, " ")
-				}
-			}
-
-			// Fix for Supabase: Ensure sslmode=require is present if not already
-			if !strings.Contains(dsn, "sslmode=") {
-				if strings.Contains(dsn, "?") {
-					dsn += "&sslmode=require"
-				} else {
-					dsn += "?sslmode=require"
-				}
-			}
+		// 1. Get the raw DSN from Env
+		rawDSN := os.Getenv("DATABASE_URL")
+		
+		if rawDSN != "" {
+			dsn = rawDSN
 		} else {
-			host := os.Getenv("DB_HOST")
-			ipv4 := resolveToIP(host)
-			
+			// Construct from components if DATABASE_URL is missing
 			dsn = fmt.Sprintf(
 				"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
-				ipv4,
+				os.Getenv("DB_HOST"),
 				os.Getenv("DB_USER"),
 				os.Getenv("DB_PASSWORD"),
 				os.Getenv("DB_NAME"),
 				os.Getenv("DB_PORT"),
 			)
 		}
+
+		// 2. Force IPv4 resolution
+		fmt.Println("Processing connection string for IPv4...")
+		dsn = forceIPv4InDSN(dsn)
+
+		// 3. Ensure SSL Mode
+		if !strings.Contains(dsn, "sslmode=") {
+			if strings.Contains(dsn, "?") {
+				dsn += "&sslmode=require"
+			} else {
+				dsn += "?sslmode=require" // For URI
+				if !strings.Contains(dsn, "postgres://") && !strings.Contains(dsn, "postgresql://") {
+					dsn += " sslmode=require" // For DSN (fallback)
+				}
+			}
+		}
+
 		fmt.Println("Connecting to Postgres...")
-		// Print sanitized DSN for debugging (hide password)
-		// fmt.Println("DSN:", strings.ReplaceAll(dsn, os.Getenv("DB_PASSWORD"), "*****"))
-		
+		// Debug: Print simplified DSN (first 10 chars) to verify structure
+		if len(dsn) > 20 {
+			fmt.Printf("DSN Start: %s...\n", dsn[:20])
+		}
+
 		DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	} else {
 		// Default to SQLite
 		fmt.Println("Using SQLite database...")
-		// Ensure directory exists or use a temp path if permission denied in /app
 		DB, err = gorm.Open(sqlite.Open("lapangan.db"), &gorm.Config{})
 	}
 
