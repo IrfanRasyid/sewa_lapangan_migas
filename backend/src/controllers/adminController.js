@@ -3,7 +3,7 @@ const db = require('../config/db');
 exports.getAllBookings = async (req, res) => {
     try {
         const result = await db.query(`
-            SELECT b.*, u.name as user_name, f.name as field_name, p.proof_url, p.status as payment_status
+            SELECT b.*, u.name as user_name, u.email as user_email, f.name as field_name, p.proof_url, p.status as payment_status
             FROM bookings b
             JOIN users u ON b.user_id = u.id
             JOIN fields f ON b.field_id = f.id

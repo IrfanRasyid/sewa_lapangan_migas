@@ -119,10 +119,10 @@ const AdminDashboard = () => {
                   <tr key={booking.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{booking.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="font-bold">{booking.user?.name}</div>
-                        <div className="text-xs text-gray-500">{booking.user?.email}</div>
+                        <div className="font-bold">{booking.user_name}</div>
+                        <div className="text-xs text-gray-500">{booking.user_email}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.field?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.field_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div>{new Date(booking.start_time).toLocaleDateString()}</div>
                         <div className="text-xs">
@@ -132,9 +132,9 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {booking.total_price.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {booking.payment_proof ? (
+                        {booking.proof_url ? (
                             <a 
-                                href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:7860'}${booking.payment_proof}`} 
+                                href={booking.proof_url.startsWith('data:') || booking.proof_url.startsWith('http') ? booking.proof_url : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:7860'}${booking.proof_url}`} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 underline"
