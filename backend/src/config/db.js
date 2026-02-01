@@ -11,6 +11,7 @@ const initDB = async () => {
   if (pool) return pool;
 
   let connectionString = process.env.DATABASE_URL;
+  let originalHostname = null;
 
   // Fallback to individual variables if DATABASE_URL is not set
   if (!connectionString) {
@@ -27,36 +28,37 @@ const initDB = async () => {
 
   console.log("Initializing database connection...");
 
-  // IPv4 Force Resolution Logic for Hugging Face / Docker environments
+  // IPv4 Force Resolution Logic (Custom Fix for Local DNS/Supabase issues)
   try {
-    // Handle "postgres://" and "postgresql://"
-    if (!connectionString.startsWith('postgres://') && !connectionString.startsWith('postgresql://')) {
-        // If it's a DSN string like "host=... user=...", we might need different parsing
-        // For now, assume URL format is preferred or constructed above.
-    } else {
+    if (connectionString.startsWith('postgres://') || connectionString.startsWith('postgresql://')) {
         const parsed = new url.URL(connectionString);
-        const hostname = parsed.hostname;
+        originalHostname = parsed.hostname;
         
-        // Check if it's already an IP
-        const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-        
-        if (!isIP && hostname !== 'localhost') {
-            console.log(`Resolving hostname ${hostname} to IPv4...`);
-            const { address } = await lookup(hostname, { family: 4 });
-            console.log(`Resolved ${hostname} to: ${address}`);
-            parsed.hostname = address;
-            connectionString = parsed.toString();
+        // Resolve hostname to IPv4
+        const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(originalHostname);
+        if (!isIP && originalHostname !== 'localhost') {
+            console.log(`Resolving hostname ${originalHostname} to IPv4...`);
+            try {
+                const { address } = await lookup(originalHostname, { family: 4 });
+                console.log(`Resolved ${originalHostname} to: ${address}`);
+                parsed.hostname = address;
+                connectionString = parsed.toString();
+            } catch (e) {
+                console.error(`Failed to resolve ${originalHostname}, using original:`, e.message);
+            }
         }
     }
   } catch (err) {
     console.error("DNS Resolution warning:", err.message);
-    // Continue with original string if parsing fails
   }
 
   pool = new Pool({
     connectionString,
-    ssl: {
-      rejectUnauthorized: false // Often required for hosted Postgres services
+    ssl: (process.env.DB_SNI_HOST || (originalHostname && originalHostname !== 'localhost')) ? {
+      rejectUnauthorized: false,
+      servername: process.env.DB_SNI_HOST || originalHostname
+    } : {
+      rejectUnauthorized: false
     }
   });
 
