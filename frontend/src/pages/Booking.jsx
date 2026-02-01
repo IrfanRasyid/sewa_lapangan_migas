@@ -45,6 +45,19 @@ const Booking = () => {
 
   const handleBooking = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setModal({
+            isOpen: true,
+            title: 'Login Diperlukan',
+            message: 'Silakan login terlebih dahulu untuk memesan lapangan.',
+            type: 'warning',
+            confirmText: 'Login',
+            cancelText: 'Batal',
+            onConfirm: () => navigate('/login')
+        });
+        return;
+    }
     setError('');
 
     if (!date || !time) {

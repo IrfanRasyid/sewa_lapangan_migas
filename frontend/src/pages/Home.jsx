@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { OrbitProgress } from 'react-loading-indicators';
 import api from '../api/axios';
+import Modal from '../components/Modal';
 
 const Home = () => {
   const [fields, setFields] = useState([]);
@@ -423,12 +424,26 @@ const Home = () => {
                                 </div>
                             </div>
                             
-                            <Link 
-                                to={`/booking/${field.id}`}
+                            <button 
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        setModal({
+                                            isOpen: true,
+                                            title: 'Login Diperlukan',
+                                            message: 'Silakan login terlebih dahulu untuk memesan lapangan.',
+                                            type: 'warning',
+                                            confirmText: 'Login',
+                                            cancelText: 'Batal',
+                                            onConfirm: () => navigate('/login')
+                                        });
+                                    } else {
+                                        navigate(`/booking/${field.id}`);
+                                    }
+                                }}
                                 className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition shadow-md hover:shadow-lg"
                             >
                                 Booking Sekarang
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>
