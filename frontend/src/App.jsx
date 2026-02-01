@@ -20,6 +20,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/booking/:fieldId" element={<Booking />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
           </Routes>
         </main>
       </div>

@@ -81,6 +81,16 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+      <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
+          <button 
+              onClick={() => navigate('/admin/users')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
+          >
+              Manage Users
+          </button>
+      </div>
+
       <Modal 
         isOpen={modal.isOpen} 
         onClose={closeModal} 
