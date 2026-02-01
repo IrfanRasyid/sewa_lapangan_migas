@@ -13,6 +13,13 @@ const Home = () => {
   // User bookings state
   const [myBookings, setMyBookings] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', action: null });
+  const navigate = useNavigate();
+
+  const closeModal = () => {
+    setModal(prev => ({ ...prev, isOpen: false }));
+    if (modal.action) modal.action();
+  };
 
   useEffect(() => {
     const fetchFieldsAndBookings = async () => {
