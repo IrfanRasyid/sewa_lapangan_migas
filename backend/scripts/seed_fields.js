@@ -13,7 +13,7 @@ const fieldsData = [
     name: 'Lapangan Badminton',
     type: 'Badminton',
     price_per_hour: 35000,
-    image_url: 'https://images.unsplash.com/photo-1626224583764-84786c713664?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    image_url: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2070&auto=format&fit=crop',
     description: 'Lapangan badminton indoor dengan pencahayaan standar turnamen.'
   }
 ];
@@ -23,6 +23,10 @@ async function seedFields() {
     console.log("Connecting to DB...");
     const client = await pool.connect();
     console.log("Connected! Seeding fields...");
+
+    // Ensure phone column exists in users table
+    await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)');
+    console.log("Verified/Added phone column to users table.");
 
     // Delete existing fields to avoid duplicates or inconsistent data
     await client.query('DELETE FROM bookings'); // Delete bookings first due to FK

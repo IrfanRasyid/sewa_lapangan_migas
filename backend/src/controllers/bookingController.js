@@ -85,15 +85,30 @@ exports.uploadPaymentProof = async (req, res) => {
         return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Use full URL for proof_url if possible, or relative path
-    const proofUrl = `/uploads/${file.filename}`;
-
     try {
         // Verify booking belongs to user
         const bookingCheck = await db.query('SELECT * FROM bookings WHERE id = $1 AND user_id = $2', [id, userId]);
         if (bookingCheck.rows.length === 0) {
             return res.status(404).json({ message: 'Booking not found or access denied' });
         }
+
+        // Upload to Supabase Storage
+        const fileExt = file.originalname.split('.').pop();
+        const fileName = `proof_${id}_${Date.now()}.${fileExt}`;
+        const { data, error: uploadError } = await supabase.storage
+            .from('payment-proofs')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype
+            });
+
+        if (uploadError) {
+            console.error("Supabase upload error:", uploadError);
+            throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('payment-proofs')
+            .getPublicUrl(fileName);
 
         // Insert Payment or Update
         const paymentCheck = await db.query('SELECT * FROM payments WHERE booking_id = $1', [id]);
@@ -102,19 +117,20 @@ exports.uploadPaymentProof = async (req, res) => {
             // Update existing
             await db.query(
                 'UPDATE payments SET proof_url = $1, status = $2 WHERE booking_id = $3',
-                [proofUrl, 'pending', id]
+                [publicUrl, 'pending', id]
             );
         } else {
             // Create new
-             await db.query(
+            await db.query(
                 'INSERT INTO payments (booking_id, amount, proof_url, status) VALUES ($1, $2, $3, $4)',
-                [id, bookingCheck.rows[0].total_price, proofUrl, 'pending']
+                [id, bookingCheck.rows[0].total_price, publicUrl, 'pending']
             );
         }
         
-        res.json({ message: 'Payment proof uploaded successfully', proof_url: proofUrl });
+        res.json({ message: 'Payment proof uploaded successfully', proof_url: publicUrl });
 
     } catch (err) {
+        console.error("Payment proof upload error:", err);
         res.status(500).json({ message: 'Error uploading proof', error: err.message });
     }
 };
