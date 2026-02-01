@@ -92,23 +92,9 @@ exports.uploadPaymentProof = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found or access denied' });
         }
 
-        // Upload to Supabase Storage
-        const fileExt = file.originalname.split('.').pop();
-        const fileName = `proof_${id}_${Date.now()}.${fileExt}`;
-        const { data, error: uploadError } = await supabase.storage
-            .from('payment-proofs')
-            .upload(fileName, file.buffer, {
-                contentType: file.mimetype
-            });
-
-        if (uploadError) {
-            console.error("Supabase upload error:", uploadError);
-            throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('payment-proofs')
-            .getPublicUrl(fileName);
+        // Convert to Base64 Data URI (Store directly in DB to avoid Storage dependencies)
+        const base64Image = file.buffer.toString('base64');
+        const proofUrl = `data:${file.mimetype};base64,${base64Image}`;
 
         // Insert Payment or Update
         const paymentCheck = await db.query('SELECT * FROM payments WHERE booking_id = $1', [id]);
@@ -117,17 +103,17 @@ exports.uploadPaymentProof = async (req, res) => {
             // Update existing
             await db.query(
                 'UPDATE payments SET proof_url = $1, status = $2 WHERE booking_id = $3',
-                [publicUrl, 'pending', id]
+                [proofUrl, 'pending', id]
             );
         } else {
             // Create new
             await db.query(
                 'INSERT INTO payments (booking_id, amount, proof_url, status) VALUES ($1, $2, $3, $4)',
-                [id, bookingCheck.rows[0].total_price, publicUrl, 'pending']
+                [id, bookingCheck.rows[0].total_price, proofUrl, 'pending']
             );
         }
         
-        res.json({ message: 'Payment proof uploaded successfully', proof_url: publicUrl });
+        res.json({ message: 'Payment proof uploaded successfully', proof_url: proofUrl });
 
     } catch (err) {
         console.error("Payment proof upload error:", err);
