@@ -57,6 +57,7 @@ const Home = () => {
           console.error("Failed to fetch my bookings", err);
           // Optional: Handle 401 by setting isLoggedIn(false)
           if (err.response && err.response.status === 401) {
+              localStorage.removeItem('token');
               setIsLoggedIn(false);
           }
       }
