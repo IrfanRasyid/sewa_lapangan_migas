@@ -29,6 +29,22 @@ const Booking = () => {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setModal({
+            isOpen: true,
+            title: 'Login Diperlukan',
+            message: 'Anda harus login untuk mengakses halaman booking.',
+            type: 'warning',
+            confirmText: 'Login',
+            cancelText: 'Kembali',
+            onConfirm: () => navigate('/login'),
+            action: () => navigate('/')
+        });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     const fetchField = async () => {
       try {
         const res = await api.get(`/fields/${fieldId}`);

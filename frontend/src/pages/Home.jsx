@@ -136,6 +136,16 @@ const Home = () => {
 
   return (
     <div>
+      <Modal 
+        isOpen={modal.isOpen} 
+        onClose={closeModal} 
+        title={modal.title} 
+        message={modal.message} 
+        type={modal.type}
+        onConfirm={modal.onConfirm}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+      />
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)]">
         {/* Left Content */}
