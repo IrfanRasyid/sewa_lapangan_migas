@@ -30,37 +30,42 @@ const initDB = async () => {
 
   // IPv4 Force Resolution Logic (Custom Fix for Local DNS/Supabase issues)
   try {
-    if (connectionString.startsWith('postgres://') || connectionString.startsWith('postgresql://')) {
-        const parsed = new url.URL(connectionString);
-        originalHostname = parsed.hostname;
-        
-        // Resolve hostname to IPv4
-        const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(originalHostname);
-        if (!isIP && originalHostname !== 'localhost') {
-            console.log(`Resolving hostname ${originalHostname} to IPv4...`);
-            try {
-                const { address } = await lookup(originalHostname, { family: 4 });
-                console.log(`Resolved ${originalHostname} to: ${address}`);
-                parsed.hostname = address;
-                connectionString = parsed.toString();
-            } catch (e) {
-                console.error(`Failed to resolve ${originalHostname}, using original:`, e.message);
+            if (connectionString.startsWith('postgres://') || connectionString.startsWith('postgresql://')) {
+              const parsed = new url.URL(connectionString);
+              originalHostname = parsed.hostname;
+              const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(originalHostname);
+              
+              // Log what we found
+              console.log(`DB Hostname: ${originalHostname} (IP: ${isIP})`);
+              
+              if (!isIP && originalHostname !== 'localhost') {
+                console.log(`Resolving hostname ${originalHostname} to IPv4...`);
+                try {
+                  const { address } = await lookup(originalHostname, { family: 4 });
+                  console.log(`Resolved ${originalHostname} to: ${address}`);
+                  parsed.hostname = address;
+                  connectionString = parsed.toString();
+                } catch (e) {
+                  console.error(`Failed to resolve ${originalHostname}, using original:`, e.message);
+                }
+              }
             }
-        }
-    }
-  } catch (err) {
-    console.error("DNS Resolution warning:", err.message);
-  }
+          } catch (err) {
+            console.error("DNS Resolution warning:", err.message);
+          }
+          
+          const sniHost = process.env.DB_SNI_HOST || (originalHostname && originalHostname !== 'localhost' ? originalHostname : undefined);
+          console.log(`Connecting with SNI: ${sniHost || 'Disabled'}`);
 
-  pool = new Pool({
-    connectionString,
-    ssl: (process.env.DB_SNI_HOST || (originalHostname && originalHostname !== 'localhost')) ? {
-      rejectUnauthorized: false,
-      servername: process.env.DB_SNI_HOST || originalHostname
-    } : {
-      rejectUnauthorized: false
-    }
-  });
+          pool = new Pool({
+            connectionString,
+            ssl: sniHost ? {
+              rejectUnauthorized: false,
+              servername: sniHost
+            } : {
+              rejectUnauthorized: false
+            }
+          });
 
   // Test connection
   try {
