@@ -134,7 +134,7 @@ const AdminDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {booking.payment_proof ? (
                             <a 
-                                href={`http://localhost:8080${booking.payment_proof}`} 
+                                href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:7860'}${booking.payment_proof}`} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 underline"

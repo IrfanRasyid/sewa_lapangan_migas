@@ -166,7 +166,7 @@ const Home = () => {
         {/* Right Image */}
         <div className="hidden md:block w-full md:w-1/2 bg-gray-200">
           <img 
-            src={field?.images || "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2070&auto=format&fit=crop"} 
+            src={field?.image_url || "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2070&auto=format&fit=crop"} 
             alt="Badminton Court" 
             className="w-full h-full object-cover"
           />
