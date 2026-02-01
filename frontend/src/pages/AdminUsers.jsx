@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { OrbitProgress } from 'react-loading-indicators';
 import api from '../api/axios';
 import Modal from '../components/Modal';
 
@@ -80,7 +81,11 @@ const AdminUsers = () => {
         }
     };
 
-    if (loading) return <div className="text-center mt-10">Loading users...</div>;
+    if (loading) return (
+        <div className="text-center mt-10 flex justify-center">
+            <OrbitProgress variant="track-disc" color="#3184cc" size="medium" text="" textColor="" />
+        </div>
+    );
 
     return (
         <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">

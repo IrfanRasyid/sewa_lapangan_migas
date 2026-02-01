@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { OrbitProgress } from 'react-loading-indicators';
 import api from '../api/axios';
 import { QRCodeSVG } from 'qrcode.react';
 import Modal from '../components/Modal';
@@ -120,7 +121,12 @@ const Booking = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10">Loading...</div>;
+  if (loading) return (
+    <div className="text-center mt-10 flex justify-center">
+      <OrbitProgress variant="track-disc" color="#3184cc" size="medium" text="" textColor="" />
+    </div>
+  );
+
   if (!field) return <div className="text-center mt-10 text-red-500">{error || "Field not found"}</div>;
 
   if (showPayment && bookingData) {

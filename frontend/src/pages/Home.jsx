@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { OrbitProgress } from 'react-loading-indicators';
 import api from '../api/axios';
 
 const Home = () => {
@@ -123,7 +124,11 @@ const Home = () => {
   const upcomingBookings = myBookings.filter(b => new Date(b.end_time) > now).sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
   const pastBookings = myBookings.filter(b => new Date(b.end_time) <= now).sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
 
-  if (loading) return <div className="text-center mt-10">Loading fields...</div>;
+  if (loading) return (
+    <div className="text-center mt-10 flex justify-center">
+      <OrbitProgress variant="track-disc" color="#3184cc" size="medium" text="" textColor="" />
+    </div>
+  );
 
   // Use the first field as the featured single field
   const field = fields.length > 0 ? fields[0] : null;

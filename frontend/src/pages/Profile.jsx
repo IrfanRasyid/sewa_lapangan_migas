@@ -60,7 +60,11 @@ const Profile = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10">Loading profile...</div>;
+  if (loading) return (
+    <div className="text-center mt-10 flex justify-center">
+      <OrbitProgress variant="track-disc" color="#3184cc" size="medium" text="" textColor="" />
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-6 py-10">
