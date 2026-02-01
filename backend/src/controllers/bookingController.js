@@ -1,7 +1,7 @@
 const db = require('../config/db');
 
 exports.createBooking = async (req, res) => {
-    const { field_id, start_time, end_time } = req.body;
+    const { field_id, start_time, end_time, is_member_booking } = req.body;
     const userId = req.userId;
 
     // Validate inputs
@@ -17,22 +17,7 @@ exports.createBooking = async (req, res) => {
         }
         const pricePerHour = parseFloat(fieldResult.rows[0].price_per_hour);
 
-        // 2. Check for overlap
-        // Overlap logic: (start1 < end2) AND (end1 > start2)
-        const overlapCheck = await db.query(
-            `SELECT * FROM bookings 
-             WHERE field_id = $1 
-             AND status != 'cancelled'
-             AND start_time < $3 
-             AND end_time > $2`,
-            [field_id, start_time, end_time]
-        );
-
-        if (overlapCheck.rows.length > 0) {
-            return res.status(409).json({ message: 'Field is already booked for this time slot' });
-        }
-
-        // 3. Calculate total price
+        // Calculate Duration
         const start = new Date(start_time);
         const end = new Date(end_time);
         const durationHours = (end - start) / (1000 * 60 * 60);
@@ -41,17 +26,74 @@ exports.createBooking = async (req, res) => {
              return res.status(400).json({ message: 'Invalid time range' });
         }
 
-        const totalPrice = durationHours * pricePerHour;
+        const sessionPrice = durationHours * pricePerHour;
+        
+        // Prepare sessions (1 session for regular, 4 sessions for member)
+        let sessions = [];
+        if (is_member_booking) {
+            for (let i = 0; i < 4; i++) {
+                const sessionStart = new Date(start);
+                sessionStart.setDate(start.getDate() + (i * 7));
+                
+                const sessionEnd = new Date(end);
+                sessionEnd.setDate(end.getDate() + (i * 7));
+                
+                sessions.push({ start: sessionStart, end: sessionEnd });
+            }
+        } else {
+            sessions.push({ start: start, end: end });
+        }
 
-        // 4. Create Booking
-        const result = await db.query(
-            `INSERT INTO bookings (user_id, field_id, start_time, end_time, total_price, status)
-             VALUES ($1, $2, $3, $4, $5, 'pending')
-             RETURNING *`,
-            [userId, field_id, start_time, end_time, totalPrice]
-        );
+        // 2. Check for overlap for ALL sessions
+        for (const session of sessions) {
+             const overlapCheck = await db.query(
+                `SELECT * FROM bookings 
+                 WHERE field_id = $1 
+                 AND status != 'cancelled'
+                 AND start_time < $3 
+                 AND end_time > $2`,
+                [field_id, session.start.toISOString(), session.end.toISOString()]
+            );
 
-        res.status(201).json({ message: 'Booking created', data: result.rows[0] });
+            if (overlapCheck.rows.length > 0) {
+                return res.status(409).json({ 
+                    message: `Field is already booked for time slot: ${session.start.toLocaleString()}` 
+                });
+            }
+        }
+
+        // 3. Create Bookings
+        let firstBooking = null;
+
+        for (let i = 0; i < sessions.length; i++) {
+            const session = sessions[i];
+            
+            // For member booking:
+            // 1st booking carries the full price (4 * sessionPrice)
+            // 2nd, 3rd, 4th bookings carry 0 price
+            // This ensures payment logic works for the 'package'
+            let price = sessionPrice;
+            if (is_member_booking) {
+                if (i === 0) {
+                    price = sessionPrice * 4;
+                } else {
+                    price = 0;
+                }
+            }
+
+            const result = await db.query(
+                `INSERT INTO bookings (user_id, field_id, start_time, end_time, total_price, status)
+                 VALUES ($1, $2, $3, $4, $5, 'pending')
+                 RETURNING *`,
+                [userId, field_id, session.start.toISOString(), session.end.toISOString(), price]
+            );
+
+            if (i === 0) {
+                firstBooking = result.rows[0];
+            }
+        }
+
+        res.status(201).json({ message: 'Booking created', data: firstBooking });
 
     } catch (err) {
         res.status(500).json({ message: 'Error creating booking', error: err.message });
