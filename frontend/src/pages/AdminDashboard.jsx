@@ -8,11 +8,16 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', action: null });
+  const [selectedProof, setSelectedProof] = useState(null);
   const navigate = useNavigate();
 
   const closeModal = () => {
     setModal(prev => ({ ...prev, isOpen: false }));
     if (modal.action) modal.action();
+  };
+
+  const closeProofModal = () => {
+    setSelectedProof(null);
   };
 
   useEffect(() => {
@@ -83,6 +88,48 @@ const AdminDashboard = () => {
         message={modal.message} 
         type={modal.type} 
       />
+
+      {/* Proof Modal */}
+      {selectedProof && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button 
+              onClick={closeProofModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            >
+              &times;
+            </button>
+            <h3 className="text-xl font-bold mb-4">Payment Proof</h3>
+            <div className="flex justify-center bg-gray-100 p-4 rounded min-h-[200px] items-center">
+              <img 
+                src={selectedProof} 
+                alt="Payment Proof" 
+                className="max-w-full max-h-[70vh] object-contain"
+                onError={(e) => {
+                  e.target.onerror = null; 
+                  e.target.src = 'https://via.placeholder.com/400x300?text=Image+Load+Error';
+                }}
+              />
+            </div>
+            <div className="mt-4 flex justify-end">
+               <a 
+                  href={selectedProof} 
+                  download="payment_proof"
+                  className="bg-blue-600 text-white px-4 py-2 rounded mr-2 hover:bg-blue-700"
+                >
+                  Download
+               </a>
+              <button 
+                onClick={closeProofModal}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
         <button 
@@ -133,14 +180,17 @@ const AdminDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {booking.total_price.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {booking.proof_url ? (
-                            <a 
-                                href={booking.proof_url.startsWith('data:') || booking.proof_url.startsWith('http') ? booking.proof_url : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:7860'}${booking.proof_url}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline"
+                            <button 
+                                onClick={() => {
+                                    const url = booking.proof_url.startsWith('data:') || booking.proof_url.startsWith('http') 
+                                        ? booking.proof_url 
+                                        : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:7860'}${booking.proof_url}`;
+                                    setSelectedProof(url);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 underline bg-transparent border-none cursor-pointer"
                             >
                                 View Proof
-                            </a>
+                            </button>
                         ) : (
                             <span className="text-gray-400">No proof</span>
                         )}
