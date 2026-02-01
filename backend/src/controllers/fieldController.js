@@ -3,7 +3,7 @@ const db = require('../config/db');
 exports.getAllFields = async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM fields ORDER BY id ASC');
-    res.json(result.rows);
+    res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching fields', error: err.message });
   }
@@ -16,10 +16,20 @@ exports.getFieldById = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Field not found' });
     }
-    res.json(result.rows[0]);
+    res.json({ data: result.rows[0] });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching field', error: err.message });
   }
+};
+
+exports.getFieldBookings = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await db.query('SELECT * FROM bookings WHERE field_id = $1', [id]);
+        res.json({ data: result.rows });
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching bookings', error: err.message });
+    }
 };
 
 exports.createField = async (req, res) => {
@@ -29,7 +39,7 @@ exports.createField = async (req, res) => {
             'INSERT INTO fields (name, type, price_per_hour, image_url, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [name, type, price_per_hour, image_url, description]
         );
-        res.status(201).json(result.rows[0]);
+        res.status(201).json({ data: result.rows[0], message: 'Field created successfully' });
     } catch (err) {
         res.status(500).json({ message: 'Error creating field', error: err.message });
     }
@@ -46,7 +56,7 @@ exports.updateField = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Field not found' });
         }
-        res.json(result.rows[0]);
+        res.json({ data: result.rows[0], message: 'Field updated successfully' });
     } catch (err) {
         res.status(500).json({ message: 'Error updating field', error: err.message });
     }

@@ -51,7 +51,7 @@ exports.createBooking = async (req, res) => {
             [userId, field_id, start_time, end_time, totalPrice]
         );
 
-        res.status(201).json({ message: 'Booking created', booking: result.rows[0] });
+        res.status(201).json({ message: 'Booking created', data: result.rows[0] });
 
     } catch (err) {
         res.status(500).json({ message: 'Error creating booking', error: err.message });
@@ -70,7 +70,7 @@ exports.getMyBookings = async (req, res) => {
              ORDER BY b.created_at DESC`,
             [userId]
         );
-        res.json(result.rows);
+        res.json({ data: result.rows });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching bookings', error: err.message });
     }

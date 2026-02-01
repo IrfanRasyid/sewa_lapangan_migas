@@ -5,6 +5,7 @@ const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
 
 router.get('/', fieldController.getAllFields);
 router.get('/:id', fieldController.getFieldById);
+router.get('/:id/bookings', fieldController.getFieldBookings);
 
 // Admin Routes
 router.post('/', verifyToken, isAdmin, fieldController.createField);

@@ -10,7 +10,7 @@ exports.getAllBookings = async (req, res) => {
             LEFT JOIN payments p ON b.id = p.booking_id
             ORDER BY b.created_at DESC
         `);
-        res.json(result.rows);
+        res.json({ data: result.rows });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching bookings', error: err.message });
     }
@@ -28,7 +28,7 @@ exports.updateBookingStatus = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Booking not found' });
         }
-        res.json(result.rows[0]);
+        res.json({ data: result.rows[0], message: 'Status updated successfully' });
     } catch (err) {
          res.status(500).json({ message: 'Error updating status', error: err.message });
     }
