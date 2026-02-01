@@ -14,6 +14,6 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/uploads/(.*)", "destination": "/api/index.js" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    { "source": "/((?!api/|assets/|favicon.ico).*)", "destination": "/index.html" }
   ]
 }
