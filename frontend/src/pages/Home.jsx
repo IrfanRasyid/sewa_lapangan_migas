@@ -134,9 +134,8 @@ const Home = () => {
         {/* Left Content */}
         <div className="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24 bg-white py-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-            Sewa Lapangan<br />
-            Bulutangkis<br />
-            Premium
+            Lapangan Migas 61<br />
+            <span className="text-blue-600">Bulutangkis Premium</span>
           </h1>
           <p className="text-lg text-gray-600 mb-8 max-w-md">
             Lapangan bulutangkis indoor berkualitas tinggi dengan fasilitas lengkap. Ideal untuk latihan pribadi atau olahraga bersama teman.

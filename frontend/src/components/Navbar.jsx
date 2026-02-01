@@ -44,6 +44,7 @@ const Navbar = () => {
               <path d="M14.5 15l2.5-10" />
               <path d="M7 5c2.5-1.5 7.5-1.5 10 0" />
             </svg>
+            Lapangan Migas 61
           </Link>
 
           {/* Mobile menu button */}

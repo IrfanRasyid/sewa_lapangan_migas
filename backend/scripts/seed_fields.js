@@ -10,32 +10,11 @@ const pool = new Pool({
 
 const fieldsData = [
   {
-    name: 'Lapangan Futsal A (Vinyl)',
-    type: 'Futsal',
-    price_per_hour: 35000,
-    image_url: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    description: 'Lapangan futsal standar internasional dengan lantai vinyl berkualitas tinggi.'
-  },
-  {
-    name: 'Lapangan Futsal B (Rumput Sintetis)',
-    type: 'Futsal',
-    price_per_hour: 35000,
-    image_url: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    description: 'Lapangan futsal dengan rumput sintetis yang nyaman dan aman.'
-  },
-  {
-    name: 'Lapangan Badminton 1',
+    name: 'Lapangan Badminton',
     type: 'Badminton',
     price_per_hour: 35000,
     image_url: 'https://images.unsplash.com/photo-1626224583764-84786c713664?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     description: 'Lapangan badminton indoor dengan pencahayaan standar turnamen.'
-  },
-  {
-    name: 'Lapangan Basket Outdoor',
-    type: 'Basket',
-    price_per_hour: 35000,
-    image_url: 'https://images.unsplash.com/photo-1546519638-68e109498ee2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    description: 'Lapangan basket outdoor dengan ring standar FIBA.'
   }
 ];
 
