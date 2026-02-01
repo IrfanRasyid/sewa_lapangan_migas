@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { OrbitProgress } from 'react-loading-indicators';
 import api from '../api/axios';
 
 const Profile = () => {

@@ -101,7 +101,10 @@ const AdminDashboard = () => {
         onClose={closeModal} 
         title={modal.title} 
         message={modal.message} 
-        type={modal.type} 
+        type={modal.type}
+        onConfirm={modal.onConfirm}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
       />
 
       {/* Proof Modal */}
