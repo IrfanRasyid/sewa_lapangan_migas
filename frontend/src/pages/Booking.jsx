@@ -7,6 +7,10 @@ import Modal from '../components/Modal';
 const Booking = () => {
   const { fieldId } = useParams();
   const [field, setField] = useState(null);
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [isMemberBooking, setIsMemberBooking] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
