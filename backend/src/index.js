@@ -41,10 +41,57 @@ app.get('/', (req, res) => {
   res.send('Sewa Lapangan Backend is running (Node.js on Vercel)');
 });
 
-// Initialize DB
-initDB().then(() => {
-    createTables().catch(err => console.error('Table creation failed:', err));
-}).catch(err => console.error('DB Init failed:', err));
+// Health Check & DB Test Endpoint
+app.get('/api/health', async (req, res) => {
+    try {
+        const { initDB } = require('./config/db');
+        const pool = await initDB();
+        const result = await pool.query('SELECT NOW()');
+        res.json({ 
+            status: 'ok', 
+            message: 'Database connected', 
+            time: result.rows[0].now,
+            env: {
+                google_client_id: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing',
+                db_url: process.env.DATABASE_URL ? 'Set' : 'Missing'
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            status: 'error', 
+            message: 'Database connection failed', 
+            error: err.message,
+            stack: err.stack
+        });
+    }
+});
+
+// Migration Endpoint (Temporary)
+app.get('/api/migrate', async (req, res) => {
+    try {
+        const { query, initDB } = require('./config/db');
+        await initDB();
+        
+        // 1. Add google_id column
+        await query(`
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='google_id') THEN 
+                    ALTER TABLE users ADD COLUMN google_id VARCHAR(255) UNIQUE; 
+                END IF; 
+            END $$;
+        `);
+
+        // 2. Make password nullable
+        await query(`
+            ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+        `);
+
+        res.json({ message: 'Migration executed successfully: Added google_id and made password nullable.' });
+    } catch (err) {
+        res.status(500).json({ message: 'Migration failed', error: err.message });
+    }
+});
 
 // Export for Vercel
 module.exports = app;

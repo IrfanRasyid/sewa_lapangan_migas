@@ -25,7 +25,26 @@ const GoogleLoginBtn = () => {
             window.location.reload(); 
         } catch (err) {
             console.error('Google Login Failed Backend:', err);
-            alert('Google Login Failed: ' + (err.response?.data?.message || err.message));
+            let errorMessage = 'Google Login Failed';
+            
+            if (err.response) {
+                if (typeof err.response.data === 'object' && err.response.data.message) {
+                    errorMessage += ': ' + err.response.data.message;
+                    if (err.response.data.error) errorMessage += ' (' + err.response.data.error + ')';
+                } else if (typeof err.response.data === 'string') {
+                    // Likely HTML error from Vercel
+                    const div = document.createElement('div');
+                    div.innerHTML = err.response.data;
+                    const text = div.textContent || div.innerText || '';
+                    errorMessage += ': ' + text.substring(0, 100) + '...';
+                } else {
+                    errorMessage += ': ' + err.message;
+                }
+            } else {
+                errorMessage += ': ' + err.message;
+            }
+            
+            alert(errorMessage);
         }
     };
 
