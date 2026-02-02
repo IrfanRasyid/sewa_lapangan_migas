@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Modal from '../components/Modal';
+import GoogleLoginBtn from '../components/GoogleLoginBtn';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -95,6 +96,14 @@ const Register = () => {
           Register
         </button>
       </form>
+
+      <div className="mt-4 flex items-center justify-between">
+          <span className="border-b w-1/5 lg:w-1/4"></span>
+          <span className="text-xs text-center text-gray-500 uppercase">or</span>
+          <span className="border-b w-1/5 lg:w-1/4"></span>
+      </div>
+
+      <GoogleLoginBtn />
     </div>
   );
 };
