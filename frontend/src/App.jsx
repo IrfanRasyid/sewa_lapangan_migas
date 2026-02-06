@@ -10,14 +10,24 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 
 function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE";
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  if (!googleClientId) {
+      console.error("VITE_GOOGLE_CLIENT_ID is missing in environment variables.");
+  }
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleOAuthProvider clientId={googleClientId || "missing-client-id"}>
       <Router>
         <div className="min-h-screen bg-gray-100">
           <Navbar />
-          <main className="container mx-auto px-4 py-8">
+          {/* Debug warning for missing Client ID (Only visible if missing) */}
+          {!googleClientId && (
+             <div className="bg-red-500 text-white text-center p-2 fixed top-0 left-0 w-full z-50">
+                Critical Error: Google Client ID is missing. Please check Vercel Environment Variables (VITE_GOOGLE_CLIENT_ID).
+             </div>
+          )}
+          <main className="container mx-auto px-4 py-8 mt-8">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
