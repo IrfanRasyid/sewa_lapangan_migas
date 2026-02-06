@@ -87,19 +87,26 @@ app.get('/api/migrate', async (req, res) => {
             ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
         `);
 
-        // 3. Seed Admin User (Idempotent)
+        // 3. Seed/Update Admin User
         // Check if admin exists
         const adminCheck = await query("SELECT * FROM users WHERE email = 'admin@lapangan.com'");
-        let adminMsg = 'Admin already exists.';
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash('admin123', 8);
+        let adminMsg = '';
         
         if (adminCheck.rows.length === 0) {
-            const bcrypt = require('bcryptjs');
-            const hashedPassword = await bcrypt.hash('admin123', 8);
             await query(
                 "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
                 ['Admin', 'admin@lapangan.com', hashedPassword, 'admin']
             );
             adminMsg = 'Admin user created (admin@lapangan.com / admin123).';
+        } else {
+            // Force update password to ensure login works
+            await query(
+                "UPDATE users SET password = $1, role = $2 WHERE email = $3",
+                [hashedPassword, 'admin', 'admin@lapangan.com']
+            );
+            adminMsg = 'Admin password reset to "admin123".';
         }
 
         res.json({ message: `Migration executed successfully. ${adminMsg}` });

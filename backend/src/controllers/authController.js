@@ -59,6 +59,7 @@ exports.login = async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('Login Error:', err); // Log error for debugging
     res.status(500).json({ message: 'Error logging in', error: err.message });
   }
 };
