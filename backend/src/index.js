@@ -87,7 +87,22 @@ app.get('/api/migrate', async (req, res) => {
             ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
         `);
 
-        res.json({ message: 'Migration executed successfully: Added google_id and made password nullable.' });
+        // 3. Seed Admin User (Idempotent)
+        // Check if admin exists
+        const adminCheck = await query("SELECT * FROM users WHERE email = 'admin@lapangan.com'");
+        let adminMsg = 'Admin already exists.';
+        
+        if (adminCheck.rows.length === 0) {
+            const bcrypt = require('bcryptjs');
+            const hashedPassword = await bcrypt.hash('admin123', 8);
+            await query(
+                "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
+                ['Admin', 'admin@lapangan.com', hashedPassword, 'admin']
+            );
+            adminMsg = 'Admin user created (admin@lapangan.com / admin123).';
+        }
+
+        res.json({ message: `Migration executed successfully. ${adminMsg}` });
     } catch (err) {
         res.status(500).json({ message: 'Migration failed', error: err.message });
     }
